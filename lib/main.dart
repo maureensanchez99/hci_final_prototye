@@ -4,24 +4,29 @@ import 'pages/title_page.dart';
 import 'services/medication_service.dart';
 import 'services/reminder_service.dart';
 import 'services/notification_service.dart';
-import 'services/background_service.dart';
 
 final medicationService = MedicationService();
 late final reminderService = ReminderService(medicationService);
 final notificationService = NotificationService();
-final backgroundService = BackgroundService();
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+bool _servicesInitialized = false;
+
+Future<void> initializeServices() async {
+  if (_servicesInitialized) return;
   
-  await medicationService.initialize();
-  await reminderService.initialize();
-  
-  if (!kIsWeb) {
-    await notificationService.initialize();
-    await backgroundService.initialize();
+  try {
+    await medicationService.initialize();
+    await reminderService.initialize();
+    if (!kIsWeb) {
+      await notificationService.initialize();
+    }
+    _servicesInitialized = true;
+  } catch (e) {
+    print('Error initializing services: $e');
   }
-  
+}
+
+void main() {
   runApp(const MyApp());
 }
 

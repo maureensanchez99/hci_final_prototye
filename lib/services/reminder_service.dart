@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/reminder.dart';
 import '../models/medication.dart';
 import 'medication_service.dart';
-import 'notification_service.dart';
+import '../main.dart' show notificationService;
 
 class ReminderService {
   static const String _remindersKey = 'reminders';
@@ -68,7 +68,6 @@ class ReminderService {
       final medication = await medicationService.getMedicationById(reminder.medicationId);
       if (medication == null) return;
       
-      final notificationService = NotificationService();
       await notificationService.scheduleReminderNotification(
         reminder: reminder,
         medication: medication,
@@ -93,7 +92,6 @@ class ReminderService {
     await _saveReminders(reminders);
     
     try {
-      final notificationService = NotificationService();
       await notificationService.cancelReminderNotification(id);
     } catch (e) {
       print('Error canceling notification (may not be supported on this platform): $e');
