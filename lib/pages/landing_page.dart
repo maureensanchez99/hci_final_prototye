@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'log.dart';
 import 'calendar.dart';
+import 'medication.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -15,7 +16,7 @@ class _LandingPageState extends State<LandingPage> {
   final String username = "Guest";
 
   late final List<Widget> _pages = [
-    LogPage(username: username),        // UPDATED
+    LogPage(username: username),
     CalendarPage(username: username),
   ];
 
@@ -47,9 +48,12 @@ class _LandingPageState extends State<LandingPage> {
 
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          setState(() {
-            _selectedIndex = 0; 
-          });
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ViewMedicationLogPage(),
+            ),
+          );
         },
         backgroundColor: Colors.green,
         label: const Text(

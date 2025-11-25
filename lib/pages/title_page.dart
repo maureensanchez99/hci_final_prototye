@@ -12,6 +12,14 @@ class TitlePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center, 
           children: [
+            Text(
+              'MediMate',
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
             const SizedBox(height: 80),  
             
             Padding(

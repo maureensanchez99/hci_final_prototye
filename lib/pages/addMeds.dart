@@ -7,6 +7,23 @@ class AddMedicationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
+      appBar: AppBar(
+        title: const Text(
+          "Add Medication",
+          style: TextStyle(
+            fontFamily: 'Merienda',
+            fontSize: 22,
+            color: Colors.black,
+          ),
+        ),
+        backgroundColor: Colors.white,   
+        elevation: 1,                    
+        iconTheme: const IconThemeData(
+          color: Colors.black,           
+        ),
+      ),
+
       body: const Center(
         child: Text(
           "Add Medication to Log",

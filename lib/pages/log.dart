@@ -18,6 +18,15 @@ class LogPage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const Text(
+              "Homepage",
+              style: TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 30),
+
             _menuButton(
               context,
               "View Medication Log",
