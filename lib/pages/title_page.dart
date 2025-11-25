@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'landing_page.dart';
-import '../main.dart';
 
 class TitlePage extends StatelessWidget {
   const TitlePage({super.key});
