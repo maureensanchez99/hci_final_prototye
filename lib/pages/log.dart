@@ -36,18 +36,18 @@ class LogPage extends StatelessWidget {
 
             _menuButton(
               context,
-              "Usage History",
-              const UsageHistoryPage(),
-            ),
-            const SizedBox(height: 20),
-
-            _menuButton(
-              context,
               "Add medication to log",
               const AddMedicationPage(),
             ),
             const SizedBox(height: 20),
 
+            _menuButton(
+              context,
+              "Usage History",
+              const UsageHistoryPage(),
+            ),
+            const SizedBox(height: 20),
+            
             _menuButton(
               context,
               "Add reminder notifications",
