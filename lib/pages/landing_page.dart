@@ -35,7 +35,7 @@ class _LandingPageState extends State<LandingPage> {
         onTap: _onTabTapped,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
+            icon: Icon(Icons.home),
             label: "Home",
           ),
           BottomNavigationBarItem(
