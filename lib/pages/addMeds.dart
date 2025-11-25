@@ -30,7 +30,13 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
     List<Map<String, String>> medications = [];
     if (medsString != null) {
       final List decoded = jsonDecode(medsString);
-      medications = decoded.cast<Map<String, String>>();
+      medications = decoded.map<Map<String, String>>((item) {
+        return {
+          'name': item['name'].toString(),
+          'dosage': item['dosage'].toString(),
+          'quantity': item['quantity'].toString(),
+        };
+      }).toList();
     }
 
     // Add new medication
@@ -46,7 +52,7 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
       const SnackBar(content: Text("Medication saved")),
     );
 
-    // Clear fields
+    // Clear input fields
     _nameController.clear();
     _dosageController.clear();
     _quantityController.clear();
@@ -58,6 +64,14 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
       backgroundColor: Colors.white,
 
       appBar: AppBar(
+        title: const Text(
+          "Add Medication",
+          style: TextStyle(
+            fontFamily: 'Merienda',
+            fontSize: 22,
+            color: Colors.black,
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -81,6 +95,7 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
 
               const SizedBox(height: 30),
 
+              // Name
               const Text("1. Name of Medication:",
                   style: TextStyle(fontSize: 18, fontFamily: 'Merienda')),
               const SizedBox(height: 8),
@@ -98,6 +113,7 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
 
               const SizedBox(height: 20),
 
+              // Dosage
               const Text("2. Dosage:",
                   style: TextStyle(fontSize: 18, fontFamily: 'Merienda')),
               const SizedBox(height: 8),
@@ -116,6 +132,7 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
 
               const SizedBox(height: 20),
 
+              // Quantity
               const Text("3. Quantity:",
                   style: TextStyle(fontSize: 18, fontFamily: 'Merienda')),
               const SizedBox(height: 8),
