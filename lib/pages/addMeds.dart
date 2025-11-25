@@ -64,14 +64,6 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
       backgroundColor: Colors.white,
 
       appBar: AppBar(
-        title: const Text(
-          "Add Medication",
-          style: TextStyle(
-            fontFamily: 'Merienda',
-            fontSize: 22,
-            color: Colors.black,
-          ),
-        ),
         backgroundColor: Colors.white,
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -83,13 +75,15 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Add Medication to Log",
-                style: TextStyle(
-                  fontFamily: 'Merienda',
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
+              Center(
+                child: const Text(
+                  "Add Medication to Log",
+                  style: TextStyle(
+                    fontFamily: 'Merienda',
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
                 ),
               ),
 

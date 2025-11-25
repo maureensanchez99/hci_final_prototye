@@ -127,70 +127,83 @@ class _ViewMedicationLogPageState extends State<ViewMedicationLogPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          "Medication Log",
-          style: TextStyle(
-            fontFamily: 'Merienda',
-            fontSize: 22,
-            color: Colors.black,
-          ),
-        ),
         backgroundColor: Colors.white,
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
-        child: _medications.isEmpty
-            ? const Center(
-                child: Text(
-                  "No medications saved yet.",
-                  style: TextStyle(
-                    fontFamily: 'Merienda',
-                    fontSize: 20,
-                    color: Colors.black,
-                  ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: const Text(
+                "Medication Log",
+                style: TextStyle(
+                  fontFamily: 'Merienda',
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
                 ),
-              )
-            : ListView.builder(
-                itemCount: _medications.length,
-                itemBuilder: (context, index) {
-                  final med = _medications[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      title: Text(
-                        med['name'] ?? '',
-                        style: const TextStyle(
-                          fontFamily: 'Merienda',
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Text(
-                        "Dosage: ${med['dosage']}\nQuantity: ${med['quantity']}",
-                        style: const TextStyle(
-                          fontFamily: 'Merienda',
-                          fontSize: 16,
-                        ),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => _editMedication(index),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteMedication(index),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
               ),
+            ),
+            const SizedBox(height: 20),
+
+            // Expanded ListView
+            Expanded(
+              child: _medications.isEmpty
+                  ? const Center(
+                      child: Text(
+                        "No medications saved yet.",
+                        style: TextStyle(
+                          fontFamily: 'Merienda',
+                          fontSize: 20,
+                          color: Colors.black,
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _medications.length,
+                      itemBuilder: (context, index) {
+                        final med = _medications[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          child: ListTile(
+                            title: Text(
+                              med['name'] ?? '',
+                              style: const TextStyle(
+                                fontFamily: 'Merienda',
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              "Dosage: ${med['dosage']}\nQuantity: ${med['quantity']}",
+                              style: const TextStyle(
+                                fontFamily: 'Merienda',
+                                fontSize: 16,
+                              ),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.blue),
+                                  onPressed: () => _editMedication(index),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => _deleteMedication(index),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
