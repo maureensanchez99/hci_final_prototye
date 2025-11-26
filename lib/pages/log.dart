@@ -18,17 +18,19 @@ class LogPage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const Text(
+              "Homepage",
+              style: TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 30),
+
             _menuButton(
               context,
               "View Medication Log",
               const ViewMedicationLogPage(),
-            ),
-            const SizedBox(height: 20),
-
-            _menuButton(
-              context,
-              "Usage History",
-              const UsageHistoryPage(),
             ),
             const SizedBox(height: 20),
 
@@ -39,6 +41,13 @@ class LogPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
+            _menuButton(
+              context,
+              "Usage History",
+              const UsageHistoryPage(),
+            ),
+            const SizedBox(height: 20),
+            
             _menuButton(
               context,
               "Add reminder notifications",
