@@ -3,6 +3,7 @@ import 'medication.dart';
 import 'usage.dart';
 import 'addMeds.dart';
 import 'reminder.dart';
+import 'reminders_list.dart';
 import 'refill.dart';
 
 class LogPage extends StatelessWidget {
@@ -52,6 +53,13 @@ class LogPage extends StatelessWidget {
               context,
               "Add reminder notifications",
               const AddReminderPage(),
+            ),
+            const SizedBox(height: 20),
+
+            _menuButton(
+              context,
+              "View Reminders",
+              const RemindersListPage(),
             ),
             const SizedBox(height: 20),
 

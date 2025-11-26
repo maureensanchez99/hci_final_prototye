@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'landing_page.dart';
 import '../main.dart';
 
@@ -8,16 +9,17 @@ class TitlePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center, 
           children: [
-            Text(
+            const Text(
               'MediMate',
               style: TextStyle(
-                fontSize: 48,
+                fontSize: 32,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: Colors.deepPurple,
               ),
             ),
             const SizedBox(height: 80),  
@@ -25,11 +27,24 @@ class TitlePage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 150.0),
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LandingPage()),
-                  );
+                onPressed: () async {
+                  // Initialize services when button is pressed
+                  if (!kIsWeb) {
+                    // Skip service initialization on Android for now
+                    try {
+                      await initializeServices();
+                    } catch (e) {
+                      print('Service initialization error: $e');
+                    }
+                  } else {
+                    await initializeServices();
+                  }
+                  if (context.mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LandingPage()),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
 
