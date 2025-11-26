@@ -37,7 +37,6 @@ class NotificationService {
         onDidReceiveNotificationResponse: _onNotificationTapped,
       );
 
-      // Request permissions asynchronously without blocking
       _requestPermissions();
       _initialized = true;
     } catch (e) {
@@ -112,9 +111,13 @@ class NotificationService {
           presentSound: true,
         ),
       ),
+
+      // FIXED: new API — remove uiLocalNotificationDateInterpretation
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+
+      // FIXED: this replaces the old uiLocalNotificationDateInterpretation
+      matchDateTimeComponents: null,
+
       payload: reminder.id,
     );
   }
