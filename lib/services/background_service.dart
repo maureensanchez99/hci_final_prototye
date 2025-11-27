@@ -57,7 +57,7 @@ class BackgroundService {
       checkRemindersTask,
       frequency: const Duration(hours: 1),
       constraints: Constraints(
-        networkType: NetworkType.not_required,
+        networkType: NetworkType.notRequired,
         requiresBatteryNotLow: false,
         requiresCharging: false,
         requiresDeviceIdle: false,
