@@ -13,10 +13,12 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _dosageController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
+  final TextEditingController _frequencyController = TextEditingController();
 
   Future<void> _saveMedication() async {
     if (_nameController.text.isEmpty ||
         _dosageController.text.isEmpty ||
+        _frequencyController.text.isEmpty ||
         _quantityController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please fill all fields")),
@@ -28,6 +30,7 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
     final String? medsString = prefs.getString('medications');
 
     List<Map<String, String>> medications = [];
+
     if (medsString != null) {
       final List decoded = jsonDecode(medsString);
       medications = decoded.map<Map<String, String>>((item) {
@@ -35,6 +38,7 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
           'name': item['name'].toString(),
           'dosage': item['dosage'].toString(),
           'quantity': item['quantity'].toString(),
+          'frequency': item['frequency'].toString(),
         };
       }).toList();
     }
@@ -44,6 +48,7 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
       'name': _nameController.text,
       'dosage': _dosageController.text,
       'quantity': _quantityController.text,
+      'frequency': _frequencyController.text,
     });
 
     await prefs.setString('medications', jsonEncode(medications));
@@ -52,10 +57,10 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
       const SnackBar(content: Text("Medication saved")),
     );
 
-    // Clear input fields
     _nameController.clear();
     _dosageController.clear();
     _quantityController.clear();
+    _frequencyController.clear();
   }
 
   @override
@@ -96,7 +101,7 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
               TextField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  hintText: "select medication name",
+                  hintText: "E.g., Ibuprofen, Vitamin D, Amoxicillin",
                   filled: true,
                   fillColor: Colors.grey[200],
                   border: OutlineInputBorder(
@@ -115,7 +120,25 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
                 controller: _dosageController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  hintText: "enter # of pills, capsules, etc each time",
+                  hintText: "How many pills/capsules you take each dosage",
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Frequency
+              const Text("3. Frequency: ",
+                  style: TextStyle(fontSize: 18, fontFamily: 'Merienda')),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _frequencyController,
+                decoration: InputDecoration(
+                  hintText: "E.g., twice a day, every 8 hours, once nightly",
                   filled: true,
                   fillColor: Colors.grey[200],
                   border: OutlineInputBorder(
@@ -127,14 +150,14 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
               const SizedBox(height: 20),
 
               // Quantity
-              const Text("3. Quantity:",
+              const Text("4. Total Quantity:",
                   style: TextStyle(fontSize: 18, fontFamily: 'Merienda')),
               const SizedBox(height: 8),
               TextField(
                 controller: _quantityController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  hintText: "enter total # of pills, capsules, etc",
+                  hintText: "Total pills/capsules currently in your bottle",
                   filled: true,
                   fillColor: Colors.grey[200],
                   border: OutlineInputBorder(

@@ -29,8 +29,10 @@ class _ViewMedicationLogPageState extends State<ViewMedicationLogPage> {
           'name': item['name'].toString(),
           'dosage': item['dosage'].toString(),
           'quantity': item['quantity'].toString(),
+          'frequency': item['frequency'].toString(),
         };
       }).toList();
+
       setState(() {});
     }
   }
@@ -47,6 +49,8 @@ class _ViewMedicationLogPageState extends State<ViewMedicationLogPage> {
         TextEditingController(text: _medications[index]['dosage']);
     final quantityController =
         TextEditingController(text: _medications[index]['quantity']);
+    final frequencyController =
+        TextEditingController(text: _medications[index]['frequency']);
 
     await showDialog(
       context: context,
@@ -61,12 +65,19 @@ class _ViewMedicationLogPageState extends State<ViewMedicationLogPage> {
             ),
             TextField(
               controller: dosageController,
-              decoration: const InputDecoration(labelText: "Dosage"),
+              decoration:
+                  const InputDecoration(labelText: "Dosage (per dose)"),
               keyboardType: TextInputType.number,
             ),
             TextField(
+              controller: frequencyController,
+              decoration: const InputDecoration(
+                  labelText: "Frequency (e.g. twice daily)"),
+            ),
+            TextField(
               controller: quantityController,
-              decoration: const InputDecoration(labelText: "Quantity"),
+              decoration:
+                  const InputDecoration(labelText: "Quantity (total pills)"),
               keyboardType: TextInputType.number,
             ),
           ],
@@ -82,6 +93,7 @@ class _ViewMedicationLogPageState extends State<ViewMedicationLogPage> {
                 _medications[index] = {
                   'name': nameController.text,
                   'dosage': dosageController.text,
+                  'frequency': frequencyController.text,
                   'quantity': quantityController.text,
                 };
               });
@@ -100,7 +112,8 @@ class _ViewMedicationLogPageState extends State<ViewMedicationLogPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Delete Medication"),
-        content: const Text("Are you sure you want to delete this medication?"),
+        content:
+            const Text("Are you sure you want to delete this medication?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -126,11 +139,13 @@ class _ViewMedicationLogPageState extends State<ViewMedicationLogPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -147,9 +162,9 @@ class _ViewMedicationLogPageState extends State<ViewMedicationLogPage> {
                 ),
               ),
             ),
+
             const SizedBox(height: 20),
 
-            // Expanded ListView
             Expanded(
               child: _medications.isEmpty
                   ? const Center(
@@ -168,32 +183,66 @@ class _ViewMedicationLogPageState extends State<ViewMedicationLogPage> {
                         final med = _medications[index];
                         return Card(
                           margin: const EdgeInsets.symmetric(vertical: 8),
-                          child: ListTile(
-                            title: Text(
-                              med['name'] ?? '',
-                              style: const TextStyle(
-                                fontFamily: 'Merienda',
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text(
-                              "Dosage: ${med['dosage']}\nQuantity: ${med['quantity']}",
-                              style: const TextStyle(
-                                fontFamily: 'Merienda',
-                                fontSize: 16,
-                              ),
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
+                          elevation: 3,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.blue),
-                                  onPressed: () => _editMedication(index),
+                                // Name
+                                Text(
+                                  med['name'] ?? '',
+                                  style: const TextStyle(
+                                    fontFamily: 'Merienda',
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => _deleteMedication(index),
+                                const SizedBox(height: 6),
+
+                                // Details
+                                Text(
+                                  "Dosage per dose: ${med['dosage']}",
+                                  style: const TextStyle(
+                                    fontFamily: 'Merienda',
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                Text(
+                                  "Frequency: ${med['frequency']}",
+                                  style: const TextStyle(
+                                    fontFamily: 'Merienda',
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                Text(
+                                  "Total quantity: ${med['quantity']}",
+                                  style: const TextStyle(
+                                    fontFamily: 'Merienda',
+                                    fontSize: 16,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 10),
+
+                                // Buttons
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.blue),
+                                      onPressed: () =>
+                                          _editMedication(index),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      onPressed: () =>
+                                          _deleteMedication(index),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
