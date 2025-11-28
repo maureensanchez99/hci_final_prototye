@@ -51,7 +51,7 @@ class _LandingPageState extends State<LandingPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const ViewMedicationLogPage(),
+              builder: (context) => const ViewMedicationPage(),
             ),
           );
         },

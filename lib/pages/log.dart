@@ -31,7 +31,7 @@ class LogPage extends StatelessWidget {
             _menuButton(
               context,
               "View Medication Log",
-              const ViewMedicationLogPage(),
+              const ViewMedicationPage(),
             ),
             const SizedBox(height: 20),
 

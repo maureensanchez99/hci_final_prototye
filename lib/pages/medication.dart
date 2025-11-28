@@ -2,15 +2,15 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ViewMedicationLogPage extends StatefulWidget {
-  const ViewMedicationLogPage({super.key});
+class ViewMedicationPage extends StatefulWidget {
+  const ViewMedicationPage({super.key});
 
   @override
-  State<ViewMedicationLogPage> createState() => _ViewMedicationLogPageState();
+  State<ViewMedicationPage> createState() => _MedicationPageState();
 }
 
-class _ViewMedicationLogPageState extends State<ViewMedicationLogPage> {
-  List<Map<String, String>> _medications = [];
+class _MedicationPageState extends State<ViewMedicationPage> {
+  List<Map<String, String>> medications = [];
 
   @override
   void initState() {
@@ -20,239 +20,186 @@ class _ViewMedicationLogPageState extends State<ViewMedicationLogPage> {
 
   Future<void> _loadMedications() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? medsString = prefs.getString('medications');
+    final medsString = prefs.getString('medications');
 
     if (medsString != null) {
       final List decoded = jsonDecode(medsString);
-      _medications = decoded.map<Map<String, String>>((item) {
-        return {
-          'name': item['name'].toString(),
-          'dosage': item['dosage'].toString(),
-          'quantity': item['quantity'].toString(),
-          'frequency': item['frequency'].toString(),
-        };
-      }).toList();
-
-      setState(() {});
+      setState(() {
+        medications = decoded.map<Map<String, String>>((item) {
+          return {
+            'name': item['name'],
+            'dosage': item['dosage'],
+            'frequency': item['frequency'],
+            'quantity': item['quantity'],
+          };
+        }).toList();
+      });
     }
   }
 
   Future<void> _saveMedications() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('medications', jsonEncode(_medications));
+    await prefs.setString('medications', jsonEncode(medications));
   }
 
-  Future<void> _editMedication(int index) async {
-    final nameController =
-        TextEditingController(text: _medications[index]['name']);
-    final dosageController =
-        TextEditingController(text: _medications[index]['dosage']);
-    final quantityController =
-        TextEditingController(text: _medications[index]['quantity']);
-    final frequencyController =
-        TextEditingController(text: _medications[index]['frequency']);
+  void _editMedication(int index) {
+    final med = medications[index];
 
-    await showDialog(
+    final nameController = TextEditingController(text: med['name']);
+    final dosageController = TextEditingController(text: med['dosage']);
+    final frequencyController = TextEditingController(text: med['frequency']);
+    final quantityController = TextEditingController(text: med['quantity']);
+
+    showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Edit Medication"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: "Medication Name"),
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Edit Medication", style: TextStyle(fontFamily: 'Merienda')),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: "Medication Name"),
+                ),
+                TextField(
+                  controller: dosageController,
+                  decoration: const InputDecoration(labelText: "Dosage"),
+                ),
+                TextField(
+                  controller: frequencyController,
+                  decoration: const InputDecoration(labelText: "Frequency"),
+                ),
+                TextField(
+                  controller: quantityController,
+                  decoration: const InputDecoration(labelText: "Total Quantity"),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
             ),
-            TextField(
-              controller: dosageController,
-              decoration:
-                  const InputDecoration(labelText: "Dosage (per dose)"),
-              keyboardType: TextInputType.number,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel", style: TextStyle(color: Colors.red)),
             ),
-            TextField(
-              controller: frequencyController,
-              decoration: const InputDecoration(
-                  labelText: "Frequency (e.g. twice daily)"),
-            ),
-            TextField(
-              controller: quantityController,
-              decoration:
-                  const InputDecoration(labelText: "Quantity (total pills)"),
-              keyboardType: TextInputType.number,
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  medications[index] = {
+                    'name': nameController.text,
+                    'dosage': dosageController.text,
+                    'frequency': frequencyController.text,
+                    'quantity': quantityController.text,
+                  };
+                });
+
+                _saveMedications();
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text("Save"),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _medications[index] = {
-                  'name': nameController.text,
-                  'dosage': dosageController.text,
-                  'frequency': frequencyController.text,
-                  'quantity': quantityController.text,
-                };
-              });
-              _saveMedications();
-              Navigator.pop(context);
-            },
-            child: const Text("Save"),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Future<void> _deleteMedication(int index) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Delete Medication"),
-        content:
-            const Text("Are you sure you want to delete this medication?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Delete"),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      setState(() {
-        _medications.removeAt(index);
-      });
-      _saveMedications();
-    }
+  void _deleteMedication(int index) async {
+    setState(() {
+      medications.removeAt(index);
+    });
+    _saveMedications();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-
+      // AppBar now empty
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 1,
+        elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
 
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: const Text(
-                "Medication Log",
-                style: TextStyle(
-                  fontFamily: 'Merienda',
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
+      body: Column(
+        children: [
+          const SizedBox(height: 10),
+
+          // NEW TITLE IN BODY
+          const Center(
+            child: Text(
+              "My Medications",
+              style: TextStyle(
+                fontFamily: "Merienda",
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
               ),
             ),
+          ),
 
-            const SizedBox(height: 20),
+          const SizedBox(height: 20),
 
-            Expanded(
-              child: _medications.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "No medications saved yet.",
-                        style: TextStyle(
-                          fontFamily: 'Merienda',
-                          fontSize: 20,
-                          color: Colors.black,
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: _medications.length,
-                      itemBuilder: (context, index) {
-                        final med = _medications[index];
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          elevation: 3,
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Name
-                                Text(
-                                  med['name'] ?? '',
-                                  style: const TextStyle(
-                                    fontFamily: 'Merienda',
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
+          Expanded(
+            child: medications.isEmpty
+                ? const Center(
+                    child: Text(
+                      "No medications added yet.",
+                      style: TextStyle(fontSize: 18, fontFamily: 'Merienda'),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: medications.length,
+                    itemBuilder: (context, index) {
+                      final med = medications[index];
 
-                                // Details
-                                Text(
-                                  "Dosage per dose: ${med['dosage']}",
-                                  style: const TextStyle(
-                                    fontFamily: 'Merienda',
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                Text(
-                                  "Frequency: ${med['frequency']}",
-                                  style: const TextStyle(
-                                    fontFamily: 'Merienda',
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                Text(
-                                  "Total quantity: ${med['quantity']}",
-                                  style: const TextStyle(
-                                    fontFamily: 'Merienda',
-                                    fontSize: 16,
-                                  ),
-                                ),
+                      return Card(
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16),
 
-                                const SizedBox(height: 10),
-
-                                // Buttons
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit,
-                                          color: Colors.blue),
-                                      onPressed: () =>
-                                          _editMedication(index),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete,
-                                          color: Colors.red),
-                                      onPressed: () =>
-                                          _deleteMedication(index),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                          title: Text(
+                            med['name']!,
+                            style: const TextStyle(
+                              fontFamily: 'Merienda',
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
+
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 6),
+                              Text("Dosage: ${med['dosage']}", style: const TextStyle(fontFamily: 'Merienda')),
+                              Text("Frequency: ${med['frequency']}", style: const TextStyle(fontFamily: 'Merienda')),
+                              Text("Total Quantity: ${med['quantity']}", style: const TextStyle(fontFamily: 'Merienda')),
+                            ],
+                          ),
+
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.green),
+                                onPressed: () => _editMedication(index),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _deleteMedication(index),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
     );
   }

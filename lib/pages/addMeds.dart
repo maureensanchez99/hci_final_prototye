@@ -13,12 +13,12 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
 
-  // DOSAGE
+  // Dosage
   int? _dosageNumber;
   final TextEditingController _dosageAmountController = TextEditingController();
 
-  // FREQUENCY
-  final TextEditingController _frequencyTimeAmountController = TextEditingController();
+  // Frequency
+  int? _frequencyAmount;
   String? _frequencyUnit;
 
   Future<void> _saveMedication() async {
@@ -26,7 +26,7 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
         _quantityController.text.isEmpty ||
         _dosageNumber == null ||
         _dosageAmountController.text.isEmpty ||
-        _frequencyTimeAmountController.text.isEmpty ||
+        _frequencyAmount == null ||
         _frequencyUnit == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please fill all fields")),
@@ -34,9 +34,8 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
       return;
     }
 
-    // Build dosage + frequency strings
     final dosage = "${_dosageNumber!} ${_dosageAmountController.text}";
-    final frequency = "every ${_frequencyTimeAmountController.text} ${_frequencyUnit!}";
+    final frequency = "every ${_frequencyAmount!} ${_frequencyUnit!}";
 
     final prefs = await SharedPreferences.getInstance();
     final String? medsString = prefs.getString('medications');
@@ -84,10 +83,10 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
                 _nameController.clear();
                 _quantityController.clear();
                 _dosageAmountController.clear();
-                _frequencyTimeAmountController.clear();
 
                 setState(() {
                   _dosageNumber = null;
+                  _frequencyAmount = null;
                   _frequencyUnit = null;
                 });
               },
@@ -99,7 +98,7 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(context); 
                 Navigator.pop(context);
               },
               child: const Text("Go Back"),
@@ -114,13 +113,11 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: SingleChildScrollView(
@@ -131,41 +128,33 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
                 child: Text(
                   "Add Medication to Log",
                   style: TextStyle(
-                    fontFamily: 'Merienda',
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
+                      fontFamily: 'Merienda',
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green),
                 ),
               ),
-
               const SizedBox(height: 30),
 
-              // NAME
-              const Text(
-                "1. Name of Medication:",
-                style: TextStyle(fontSize: 18, fontFamily: 'Merienda'),
-              ),
+              // Name
+              const Text("1. Name of Medication:",
+                  style: TextStyle(fontSize: 18, fontFamily: 'Merienda')),
               const SizedBox(height: 8),
               TextField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  hintText: "E.g., Ibuprofen",
+                  hintText: "e.g., Ibuprofen",
                   filled: true,
                   fillColor: Colors.grey[200],
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border:
+                      OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
-
               const SizedBox(height: 20),
 
-              // DOSAGE (ONE LINE)
-              const Text(
-                "2. Dosage (how much to take):",
-                style: TextStyle(fontSize: 18, fontFamily: 'Merienda'),
-              ),
+              // Dosage
+              const Text("2. Dosage:", style: TextStyle(fontSize: 18, fontFamily: 'Merienda')),
               const SizedBox(height: 8),
-
               Row(
                 children: [
                   Expanded(
@@ -184,9 +173,7 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
                       onChanged: (value) => setState(() => _dosageNumber = value),
                     ),
                   ),
-
                   const SizedBox(width: 8),
-
                   Expanded(
                     flex: 3,
                     child: TextField(
@@ -201,16 +188,11 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 20),
 
-              // FREQUENCY
-              const Text(
-                "3. Frequency (how often to take it):",
-                style: TextStyle(fontSize: 18, fontFamily: 'Merienda'),
-              ),
+              // Frequency
+              const Text("3. Frequency:", style: TextStyle(fontSize: 18, fontFamily: 'Merienda')),
               const SizedBox(height: 8),
-
               Row(
                 children: [
                   const Text("every", style: TextStyle(fontSize: 16, fontFamily: 'Merienda')),
@@ -218,15 +200,18 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
 
                   Expanded(
                     flex: 2,
-                    child: TextField(
-                      controller: _frequencyTimeAmountController,
-                      keyboardType: TextInputType.number,
+                    child: DropdownButtonFormField<int>(
+                      value: _frequencyAmount,
                       decoration: InputDecoration(
-                        hintText: "Time",
                         filled: true,
                         fillColor: Colors.grey[200],
+                        labelText: "Time",
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
+                      items: List.generate(24, (i) => i + 1)
+                          .map((n) => DropdownMenuItem(value: n, child: Text("$n")))
+                          .toList(),
+                      onChanged: (value) => setState(() => _frequencyAmount = value),
                     ),
                   ),
 
@@ -242,9 +227,7 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
                         labelText: "Unit",
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      items: ["minutes", "hours", "days", "weeks"]
-                          .map((u) => DropdownMenuItem(value: u, child: Text(u)))
-                          .toList(),
+                      items: ["minutes", "hours", "days", "weeks"].map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
                       onChanged: (value) => setState(() => _frequencyUnit = value),
                     ),
                   ),
@@ -253,17 +236,14 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
 
               const SizedBox(height: 20),
 
-              // QUANTITY
-              const Text(
-                "4. Total Quantity:",
-                style: TextStyle(fontSize: 18, fontFamily: 'Merienda'),
-              ),
+              // Quantity
+              const Text("4. Total Quantity:", style: TextStyle(fontSize: 18, fontFamily: 'Merienda')),
               const SizedBox(height: 8),
               TextField(
                 controller: _quantityController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  hintText: "Total pills in bottle",
+                  hintText: "total amount of medication in bottle",
                   filled: true,
                   fillColor: Colors.grey[200],
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -280,14 +260,8 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text(
-                    "Save Medication",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontFamily: "Merienda",
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: const Text("Save Medication",
+                      style: TextStyle(fontSize: 18, fontFamily: "Merienda", color: Colors.white)),
                 ),
               ),
             ],
