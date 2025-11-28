@@ -53,14 +53,47 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
 
     await prefs.setString('medications', jsonEncode(medications));
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Medication saved")),
-    );
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            "Medication Saved!",
+            style: TextStyle(fontFamily: "Merienda"),
+          ),
+          content: const Text(
+            "Would you like to add another medication or go back to the landing page?",
+            style: TextStyle(fontFamily: "Merienda"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); 
 
-    _nameController.clear();
-    _dosageController.clear();
-    _quantityController.clear();
-    _frequencyController.clear();
+                _nameController.clear();
+                _dosageController.clear();
+                _frequencyController.clear();
+                _quantityController.clear();
+              },
+              child: const Text(
+                "Add Another",
+                style: TextStyle(color: Colors.green),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+              ),
+              onPressed: () {
+                Navigator.pop(context);  
+                Navigator.pop(context); 
+              },
+              child: const Text("Go Back"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -95,8 +128,10 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
               const SizedBox(height: 30),
 
               // Name
-              const Text("1. Name of Medication:",
-                  style: TextStyle(fontSize: 18, fontFamily: 'Merienda')),
+              const Text(
+                "1. Name of Medication:",
+                style: TextStyle(fontSize: 18, fontFamily: 'Merienda'),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: _nameController,
@@ -113,14 +148,16 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
               const SizedBox(height: 20),
 
               // Dosage
-              const Text("2. Dosage:",
-                  style: TextStyle(fontSize: 18, fontFamily: 'Merienda')),
+              const Text(
+                "2. Dosage:",
+                style: TextStyle(fontSize: 18, fontFamily: 'Merienda'),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: _dosageController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  hintText: "How many pills/capsules you take each dosage",
+                  hintText: "How many pills/capsules per dose",
                   filled: true,
                   fillColor: Colors.grey[200],
                   border: OutlineInputBorder(
@@ -132,8 +169,10 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
               const SizedBox(height: 20),
 
               // Frequency
-              const Text("3. Frequency: ",
-                  style: TextStyle(fontSize: 18, fontFamily: 'Merienda')),
+              const Text(
+                "3. Frequency:",
+                style: TextStyle(fontSize: 18, fontFamily: 'Merienda'),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: _frequencyController,
@@ -150,8 +189,10 @@ class _AddMedicationPageState extends State<AddMedicationPage> {
               const SizedBox(height: 20),
 
               // Quantity
-              const Text("4. Total Quantity:",
-                  style: TextStyle(fontSize: 18, fontFamily: 'Merienda')),
+              const Text(
+                "4. Total Quantity:",
+                style: TextStyle(fontSize: 18, fontFamily: 'Merienda'),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: _quantityController,
