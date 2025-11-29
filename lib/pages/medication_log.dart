@@ -116,7 +116,6 @@ class _MedicationPageState extends State<ViewMedicationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // AppBar now empty
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -127,7 +126,6 @@ class _MedicationPageState extends State<ViewMedicationPage> {
         children: [
           const SizedBox(height: 10),
 
-          // NEW TITLE IN BODY
           const Center(
             child: Text(
               "My Medications",
