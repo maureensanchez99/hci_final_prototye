@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'medication_log.dart';
-import 'usage.dart';
 import 'addMeds.dart';
 import 'addMedReminders.dart'; 
 import 'reminders_list.dart';
-import 'refill.dart';
+import 'refillEstimator.dart';
+import 'usageHistory.dart';
 
 class LogPage extends StatelessWidget {
   final String username;
