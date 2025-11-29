@@ -12,7 +12,6 @@ class AddMedNotificationPage extends StatefulWidget {
 class _AddMedNotificationPageState extends State<AddMedNotificationPage> {
   List<Map<String, String>> medications = [];
   List<Map<String, dynamic>> notifications = [];
-
   Map<String, String>? _selectedMedication;
   String _selectedDay = 'Monday';
   TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
@@ -86,13 +85,12 @@ class _AddMedNotificationPageState extends State<AddMedNotificationPage> {
     await prefs.setString('notifications', jsonEncode(encoded));
   }
 
-  // Parse frequency string like "every 2 days" or "every 8 hours"
   Map<String, dynamic> _parseFrequency(String freqString) {
     final parts = freqString.toLowerCase().replaceAll('every', '').trim().split(' ');
     if (parts.length >= 2) {
       int value = int.tryParse(parts[0]) ?? 1;
       String unit = parts[1];
-      if (unit.endsWith('s') == false) unit += 's'; // normalize to plural
+      if (!unit.endsWith('s')) unit += 's';
       return {'value': value, 'unit': unit};
     }
     return {'value': 1, 'unit': 'days'};
@@ -105,12 +103,10 @@ class _AddMedNotificationPageState extends State<AddMedNotificationPage> {
       return;
     }
 
-    // Pull frequency info from selected medication
     final freqData = _parseFrequency(_selectedMedication!['frequency']!);
     int freqValue = freqData['value'];
     String freqUnit = freqData['unit'];
 
-    // Calculate first notification date based on selected day
     int startDayIndex = daysOfWeekOrder.indexOf(_selectedDay);
     DateTime today = DateTime.now();
     int daysUntilStart = (startDayIndex - (today.weekday - 1) + 7) % 7;
@@ -122,7 +118,6 @@ class _AddMedNotificationPageState extends State<AddMedNotificationPage> {
       _selectedTime.minute,
     ).add(Duration(days: daysUntilStart));
 
-    // Remove old notifications for this medication
     notifications.removeWhere((n) => n['name'] == _selectedMedication!['name']);
 
     notifications.add({
@@ -193,6 +188,26 @@ class _AddMedNotificationPageState extends State<AddMedNotificationPage> {
     return nextTimes;
   }
 
+  Future<void> _markDoseTaken(String medName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final historyString = prefs.getString('medication_history');
+    List history = historyString != null ? jsonDecode(historyString) : [];
+
+    final notif = notifications.firstWhere((n) => n['name'] == medName);
+
+    history.add({
+      'name': notif['name'],
+      'dosage': notif['dosage'],
+      'takenAt': DateTime.now().toIso8601String(),
+    });
+
+    await prefs.setString('medication_history', jsonEncode(history));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Dose marked as taken!")),
+    );
+  }
+
   Widget _buildNotificationCard(String medName) {
     final notif = notifications.firstWhere((n) => n['name'] == medName);
     final dosage = notif['dosage'];
@@ -203,24 +218,26 @@ class _AddMedNotificationPageState extends State<AddMedNotificationPage> {
       child: ListTile(
         title: Text("$medName ($dosage)",
             style: const TextStyle(fontFamily: 'Merienda', fontWeight: FontWeight.w600)),
-        subtitle: Text(nextTimes.join(', ')),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            IconButton(
-                icon: const Icon(Icons.edit, color: Colors.green),
-                onPressed: () => _editNotification(medName)),
-            IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () => _deleteNotification(medName)),
+            ...nextTimes.map((e) => Text(e)),
+            const SizedBox(height: 6),
+            ElevatedButton(
+              onPressed: () => _markDoseTaken(medName),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+              ),
+              child: const Text("Mark Dose as Taken"),
+            ),
           ],
         ),
+        trailing: IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: () => _deleteNotification(medName)),
       ),
     );
-  }
-
-  void _editNotification(String medName) {
-    // Editing logic remains similar, pulling frequency from medication
   }
 
   void _deleteNotification(String medName) {
