@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'medication.dart';
+import 'medication_log.dart';
 import 'usage.dart';
 import 'addMeds.dart';
-import 'reminder.dart';
+import 'addMedReminders.dart'; 
 import 'reminders_list.dart';
 import 'refill.dart';
 
@@ -14,7 +14,6 @@ class LogPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -31,7 +30,7 @@ class LogPage extends StatelessWidget {
             _menuButton(
               context,
               "View Medication Log",
-              const ViewMedicationLogPage(),
+              const ViewMedicationPage(),
             ),
             const SizedBox(height: 20),
 
@@ -44,24 +43,24 @@ class LogPage extends StatelessWidget {
 
             _menuButton(
               context,
-              "Usage History",
-              const UsageHistoryPage(),
-            ),
-            const SizedBox(height: 20),
-            
-            _menuButton(
-              context,
-              "Add reminder notifications",
-              const AddReminderPage(),
+              "View reminder notifications",
+              const AddMedNotificationPage(),  
             ),
             const SizedBox(height: 20),
 
             _menuButton(
               context,
-              "View Reminders",
-              const RemindersListPage(),
+              "Usage History",
+              const UsageHistoryPage(),
             ),
             const SizedBox(height: 20),
+
+            // _menuButton(
+            //   context,
+            //   "View Reminders",
+            //   const RemindersListPage(),
+            // ),
+            // const SizedBox(height: 20),
 
             _menuButton(
               context,
