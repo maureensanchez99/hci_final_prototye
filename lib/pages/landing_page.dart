@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'log.dart';
+import 'dashboard.dart';
 import 'calendar.dart';
-import 'medication.dart';
+import 'medication_log.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -51,7 +51,7 @@ class _LandingPageState extends State<LandingPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const ViewMedicationLogPage(),
+              builder: (context) => const ViewMedicationPage(),
             ),
           );
         },
