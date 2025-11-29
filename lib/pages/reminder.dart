@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
-import '../models/medication.dart';
-import '../models/reminder.dart';
-import '../services/medication_service.dart';
-import '../services/reminder_service.dart';
+import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/reminder.dart';
+import '../services/reminder_service.dart';
+import '../services/medication_service.dart';
 
 class AddReminderPage extends StatefulWidget {
   const AddReminderPage({super.key});
@@ -13,11 +14,12 @@ class AddReminderPage extends StatefulWidget {
 }
 
 class _AddReminderPageState extends State<AddReminderPage> {
-  final MedicationService _medicationService = MedicationService();
+  late MedicationService _medicationService;
   late ReminderService _reminderService;
-  List<Medication> _medications = [];
+
+  List<Map<String, String>> _medications = [];
   List<Reminder> _reminders = [];
-  Medication? _selectedMedication;
+  Map<String, String>? _selectedMedication;
   int _daysBeforeRefill = 3;
   TimeOfDay _notificationTime = const TimeOfDay(hour: 9, minute: 0);
   bool _isLoading = true;
@@ -32,24 +34,37 @@ class _AddReminderPageState extends State<AddReminderPage> {
   @override
   void initState() {
     super.initState();
+    _medicationService = MedicationService();
     _reminderService = ReminderService(_medicationService);
-    _initializeServices();
+    _loadMedications();
+    _loadReminders();
   }
 
-  Future<void> _initializeServices() async {
-    await _medicationService.initialize();
-    await _reminderService.initialize();
-    _loadMedicationsAndReminders();
+  Future<void> _loadMedications() async {
+    final prefs = await SharedPreferences.getInstance();
+    final medsString = prefs.getString('medications');
+    if (medsString != null) {
+      final List decoded = jsonDecode(medsString);
+      setState(() {
+        _medications = decoded.map<Map<String, String>>((item) {
+          return {
+            'name': item['name'],
+            'dosage': item['dosage'],
+            'frequency': item['frequency'],
+            'quantity': item['quantity'],
+          };
+        }).toList();
+        _isLoading = false;
+      });
+    } else {
+      setState(() => _isLoading = false);
+    }
   }
 
-  Future<void> _loadMedicationsAndReminders() async {
-    final medications = await _medicationService.getAllMedications();
+  Future<void> _loadReminders() async {
     final reminders = await _reminderService.getAllReminders();
-
     setState(() {
-      _medications = medications;
       _reminders = reminders;
-      _isLoading = false;
     });
   }
 
@@ -59,21 +74,10 @@ class _AddReminderPageState extends State<AddReminderPage> {
       return;
     }
 
-    if (_selectedMedication!.nextRefillDate == null) {
-      _showErrorDialog('This medication does not have a refill date set');
-      return;
-    }
-
-    final hasReminder = await _reminderService.hasReminderForMedication(_selectedMedication!.id);
-    if (hasReminder) {
-      _showErrorDialog('This medication already has a reminder set');
-      return;
-    }
-
     final reminder = Reminder(
       id: _generateId(),
-      medicationId: _selectedMedication!.id,
-      medicationName: _selectedMedication!.name,
+      medicationId: _selectedMedication!['name']!,
+      medicationName: _selectedMedication!['name']!,
       daysBeforeRefill: _daysBeforeRefill,
       createdDate: DateTime.now(),
       notificationTime: _notificationTime,
@@ -81,21 +85,15 @@ class _AddReminderPageState extends State<AddReminderPage> {
 
     await _reminderService.addReminder(reminder);
     await _reminderService.scheduleNotificationsForReminder(reminder);
-    await _loadMedicationsAndReminders();
+    await _loadReminders();
 
-    if (!mounted) return;
-    _showSuccessDialog('Reminder added successfully!');
-    setState(() {
-      _selectedMedication = null;
-      _daysBeforeRefill = 3;
-      _notificationTime = const TimeOfDay(hour: 9, minute: 0);
-    });
+    _showAddAnotherDialog();
   }
 
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: const Text('Error'),
         content: Text(message),
         actions: [
@@ -108,16 +106,30 @@ class _AddReminderPageState extends State<AddReminderPage> {
     );
   }
 
-  void _showSuccessDialog(String message) {
+  void _showAddAnotherDialog() {
     showDialog(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Success'),
-        content: Text(message),
+      builder: (context) => AlertDialog(
+        title: const Text('Reminder Added!'),
+        content: const Text('Do you want to add another notification?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop(); // close dialog
+              Navigator.of(context).pop(); // go back
+            },
+            child: const Text('Go Back'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // close dialog
+              setState(() {
+                _selectedMedication = null;
+                _daysBeforeRefill = 3;
+                _notificationTime = const TimeOfDay(hour: 9, minute: 0);
+              });
+            },
+            child: const Text('Add Another'),
           ),
         ],
       ),
@@ -126,298 +138,6 @@ class _AddReminderPageState extends State<AddReminderPage> {
 
   String _generateId() {
     return 'reminder_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(10000)}';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(
-          'Add Reminder Notifications',
-          style: TextStyle(
-            fontFamily: 'Merienda',
-            color: Colors.black,
-          ),
-        ),
-        backgroundColor: Colors.grey[200],
-        elevation: 0,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Set Up Refill Reminders',
-                    style: TextStyle(
-                      fontFamily: 'Merienda',
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  const Text(
-                    'Select Medication:',
-                    style: TextStyle(
-                      fontFamily: 'Merienda',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  _medications.isEmpty
-                      ? Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey[300]!),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'No medications added yet. Please add medications first.',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontFamily: 'Merienda',
-                            ),
-                          ),
-                        )
-                      : DropdownButtonFormField<Medication>(
-                          value: _selectedMedication,
-                          decoration: InputDecoration(
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 12),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide:
-                                  BorderSide(color: Colors.grey[300]!),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide:
-                                  BorderSide(color: Colors.grey[300]!),
-                            ),
-                          ),
-                          items: _medications
-                              .map((med) => DropdownMenuItem(
-                                    value: med,
-                                    child: Text(
-                                      '${med.name} (${med.dosage})',
-                                      style: const TextStyle(
-                                        fontFamily: 'Merienda',
-                                      ),
-                                    ),
-                                  ))
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedMedication = value;
-                            });
-                          },
-                        ),
-                  const SizedBox(height: 25),
-
-                  const Text(
-                    'Reminder Presets:',
-                    style: TextStyle(
-                      fontFamily: 'Merienda',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: _presets.map((preset) {
-                      final isSelected = _daysBeforeRefill == preset['days'];
-                      return ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isSelected
-                              ? Colors.green
-                              : Colors.grey[200],
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _daysBeforeRefill = preset['days'];
-                          });
-                        },
-                        child: Text(
-                          preset['label'],
-                          style: TextStyle(
-                            fontFamily: 'Merienda',
-                            color: isSelected
-                                ? Colors.white
-                                : Colors.black,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 20),
-
-                  const Text(
-                    'Custom Days:',
-                    style: TextStyle(
-                      fontFamily: 'Merienda',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Slider(
-                          value: _daysBeforeRefill.toDouble(),
-                          min: 1,
-                          max: 30,
-                          divisions: 29,
-                          label: '$_daysBeforeRefill days',
-                          onChanged: (value) {
-                            setState(() {
-                              _daysBeforeRefill = value.toInt();
-                            });
-                          },
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.green[100],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '$_daysBeforeRefill days',
-                          style: const TextStyle(
-                            fontFamily: 'Merienda',
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 25),
-
-                  const Text(
-                    'Notification Time:',
-                    style: TextStyle(
-                      fontFamily: 'Merienda',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  InkWell(
-                    onTap: () async {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: _notificationTime,
-                      );
-                      if (time != null) {
-                        setState(() {
-                          _notificationTime = time;
-                        });
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.access_time, color: Colors.blue[600]),
-                          const SizedBox(width: 12),
-                          Text(
-                            _notificationTime.format(context),
-                            style: const TextStyle(
-                              fontFamily: 'Merienda',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          Icon(Icons.edit, color: Colors.grey[600], size: 20),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: _addReminder,
-                      child: const Text(
-                        'Add Reminder',
-                        style: TextStyle(
-                          fontFamily: 'Merienda',
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-
-                  const Text(
-                    'Active Reminders',
-                    style: TextStyle(
-                      fontFamily: 'Merienda',
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  _reminders.isEmpty
-                      ? Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'No reminders set yet',
-                            style: TextStyle(
-                              fontFamily: 'Merienda',
-                              color: Colors.grey,
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _reminders.length,
-                          itemBuilder: (context, index) {
-                            final reminder = _reminders[index];
-                            return _buildReminderCard(reminder);
-                          },
-                        ),
-                ],
-              ),
-            ),
-    );
   }
 
   Widget _buildReminderCard(Reminder reminder) {
@@ -450,10 +170,7 @@ class _AddReminderPageState extends State<AddReminderPage> {
           children: [
             Text(
               'Notify ${reminder.daysBeforeRefill} day${reminder.daysBeforeRefill != 1 ? 's' : ''} before refill',
-              style: const TextStyle(
-                fontFamily: 'Merienda',
-                fontSize: 12,
-              ),
+              style: const TextStyle(fontFamily: 'Merienda', fontSize: 12),
             ),
             const SizedBox(height: 4),
             Row(
@@ -477,29 +194,195 @@ class _AddReminderPageState extends State<AddReminderPage> {
           children: [
             IconButton(
               icon: Icon(
-                reminder.isActive
-                    ? Icons.toggle_on
-                    : Icons.toggle_off,
-                color: reminder.isActive
-                    ? Colors.green
-                    : Colors.grey,
+                reminder.isActive ? Icons.toggle_on : Icons.toggle_off,
+                color: reminder.isActive ? Colors.green : Colors.grey,
               ),
               onPressed: () async {
-                await _reminderService
-                    .toggleReminderStatus(reminder.id);
-                await _loadMedicationsAndReminders();
+                final updatedReminder = reminder.copyWith(isActive: !reminder.isActive);
+                await _reminderService.updateReminder(updatedReminder);
+                await _loadReminders();
               },
             ),
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () async {
                 await _reminderService.deleteReminder(reminder.id);
-                await _loadMedicationsAndReminders();
+                await _loadReminders();
               },
             ),
           ],
         ),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: true,
+        title: const SizedBox(),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  const Center(
+                    child: Text(
+                      'Set Up Reminder Notifications',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Merienda',
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Select Medication:',
+                          style: TextStyle(
+                            fontFamily: 'Merienda',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _medications.isEmpty
+                            ? const Text(
+                                'No medications added yet. Please add medications first.',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontFamily: 'Merienda',
+                                ),
+                              )
+                            : DropdownButton<Map<String, String>>(
+                                value: _selectedMedication,
+                                isExpanded: true,
+                                items: _medications.map((med) {
+                                  return DropdownMenuItem<Map<String, String>>(
+                                    value: med,
+                                    child: Text('${med['name']} (${med['dosage']})'),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedMedication = value;
+                                  });
+                                },
+                              ),
+                        const SizedBox(height: 20),
+                        const Text('Reminder Presets:'),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: _presets.map((preset) {
+                            final isSelected = _daysBeforeRefill == preset['days'];
+                            return ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: isSelected ? Colors.green : Colors.grey[200]),
+                              onPressed: () {
+                                setState(() {
+                                  _daysBeforeRefill = preset['days'];
+                                });
+                              },
+                              child: Text(
+                                preset['label'],
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text('Notification Time:'),
+                        const SizedBox(height: 10),
+                        InkWell(
+                          onTap: () async {
+                            final time = await showTimePicker(
+                              context: context,
+                              initialTime: _notificationTime,
+                            );
+                            if (time != null) {
+                              setState(() {
+                                _notificationTime = time;
+                              });
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[300]!),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.access_time, color: Colors.blue[600]),
+                                const SizedBox(width: 12),
+                                Text(_notificationTime.format(context)),
+                                const Spacer(),
+                                Icon(Icons.edit, color: Colors.grey[600], size: 20),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                            ),
+                            onPressed: _addReminder,
+                            child: const Text('Add Reminder'),
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        const Text(
+                          'Active Reminders',
+                          style: TextStyle(
+                            fontFamily: 'Merienda',
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        _reminders.isEmpty
+                            ? const Text(
+                                'No reminders set yet',
+                                style: TextStyle(
+                                  fontFamily: 'Merienda',
+                                  color: Colors.grey,
+                                ),
+                              )
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _reminders.length,
+                                itemBuilder: (context, index) {
+                                  return _buildReminderCard(_reminders[index]);
+                                },
+                              ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }
