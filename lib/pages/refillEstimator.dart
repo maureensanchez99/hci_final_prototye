@@ -10,7 +10,7 @@ class RefillEstimatorPage extends StatefulWidget {
 }
 
 class _RefillEstimatorPageState extends State<RefillEstimatorPage> {
-  List<Map<String, String>> medications = [];
+  List<Map<String, dynamic>> medications = [];
   List<Map<String, dynamic>> history = [];
 
   @override
@@ -25,11 +25,13 @@ class _RefillEstimatorPageState extends State<RefillEstimatorPage> {
     final medsString = prefs.getString('medications');
     if (medsString != null) {
       final List decoded = jsonDecode(medsString);
-      medications = decoded.map<Map<String, String>>((item) {
+      medications = decoded.map<Map<String, dynamic>>((item) {
         return {
+          'id': item['id'] ?? '',
           'name': item['name'],
           'dosage': item['dosage'],
           'quantity': item['quantity'],
+          'dosesTaken': item['dosesTaken'] ?? 0,
         };
       }).toList();
     }
@@ -49,8 +51,7 @@ class _RefillEstimatorPageState extends State<RefillEstimatorPage> {
     setState(() {});
   }
 
-  String _estimateRefill(String medName, String totalQuantityStr, String dosageStr) {
-    int totalQuantity = int.tryParse(totalQuantityStr) ?? 0;
+  String _estimateRefill(String medName, int totalQuantity, String dosageStr) {
     int dosage = int.tryParse(dosageStr) ?? 1;
 
     final takenCount = history.where((h) => h['name'] == medName).length;
@@ -114,7 +115,8 @@ class _RefillEstimatorPageState extends State<RefillEstimatorPage> {
                       itemCount: medications.length,
                       itemBuilder: (context, index) {
                         final med = medications[index];
-                        final refillDate = _estimateRefill(med['name']!, med['quantity']!, med['dosage']!);
+                        final refillDate = _estimateRefill(med['name']!, med['quantity'] as int, med['dosage']!);
+                        final remainingDoses = med['quantity'] as int;
 
                         return Card(
                           margin: const EdgeInsets.symmetric(vertical: 6),
@@ -123,9 +125,23 @@ class _RefillEstimatorPageState extends State<RefillEstimatorPage> {
                               "${med['name']} (${med['dosage']})",
                               style: const TextStyle(fontFamily: 'Merienda', fontWeight: FontWeight.bold),
                             ),
-                            subtitle: Text(
-                              "Estimated refill: $refillDate",
-                              style: const TextStyle(fontFamily: 'Merienda'),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Doses Remaining: $remainingDoses",
+                                  style: const TextStyle(
+                                      fontFamily: 'Merienda',
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Estimated refill: $refillDate",
+                                  style: const TextStyle(fontFamily: 'Merienda'),
+                                ),
+                              ],
                             ),
                           ),
                         );
