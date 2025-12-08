@@ -42,34 +42,117 @@ class _MedicationPageState extends State<ViewMedicationPage> {
     await prefs.setString('medications', jsonEncode(medications));
   }
 
-  void _editMedication(int index) {
-    final med = medications[index];
+void _editMedication(int index) {
+  final med = medications[index];
 
-    final nameController = TextEditingController(text: med['name']);
-    final dosageController = TextEditingController(text: med['dosage']);
-    final frequencyController = TextEditingController(text: med['frequency']);
-    final quantityController = TextEditingController(text: med['quantity']);
+  // --- Parse dosage: e.g. "2 pills" ---
+  List<String> dosageParts = med['dosage']!.split(" ");
+  int? dosageNumber = int.tryParse(dosageParts[0]);
+  String dosageUnit = dosageParts.length > 1 ? dosageParts.sublist(1).join(" ") : "";
 
-    showDialog(
-      context: context,
-      builder: (context) {
+  final nameController = TextEditingController(text: med['name']);
+  final quantityController = TextEditingController(text: med['quantity']);
+  final dosageUnitController = TextEditingController(text: dosageUnit);
+
+  // --- Parse frequency: e.g. "every 6 hours" ---
+  String frequencyText = med['frequency']!;
+  List<String> freqParts = frequencyText.replaceFirst("every ", "").split(" ");
+  int? frequencyAmount = int.tryParse(freqParts[0]);
+  String? frequencyUnit = freqParts.length > 1 ? freqParts[1] : null;
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(builder: (context, setStateSB) {
         return AlertDialog(
-          title: const Text("Edit Medication", style: TextStyle(fontFamily: 'Merienda')),
+          title: const Text("Edit Medication",
+              style: TextStyle(fontFamily: 'Merienda')),
           content: SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Name
                 TextField(
                   controller: nameController,
                   decoration: const InputDecoration(labelText: "Medication Name"),
                 ),
-                TextField(
-                  controller: dosageController,
-                  decoration: const InputDecoration(labelText: "Dosage"),
+                const SizedBox(height: 10),
+
+                // Dosage (dropdown + text)
+                const Text("Dosage:", style: TextStyle(fontFamily: 'Merienda')),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: DropdownButtonFormField<int>(
+                        value: dosageNumber,
+                        decoration: const InputDecoration(labelText: "Num"),
+                        items: List.generate(10, (i) => i + 1)
+                            .map((n) => DropdownMenuItem(
+                                value: n, child: Text(n.toString())))
+                            .toList(),
+                        onChanged: (val) =>
+                            setStateSB(() => dosageNumber = val),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 3,
+                      child: TextField(
+                        controller: dosageUnitController,
+                        decoration: const InputDecoration(
+                            labelText: "Unit (pills, mL, etc.)"),
+                      ),
+                    ),
+                  ],
                 ),
-                TextField(
-                  controller: frequencyController,
-                  decoration: const InputDecoration(labelText: "Frequency"),
+
+                const SizedBox(height: 15),
+
+                // Frequency Row
+                const Text("Frequency:", style: TextStyle(fontFamily: 'Merienda')),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    const Text("every "),
+                    const SizedBox(width: 5),
+
+                    Expanded(
+                      flex: 2,
+                      child: DropdownButtonFormField<int>(
+                        value: frequencyAmount,
+                        decoration: const InputDecoration(labelText: "Time"),
+                        items: List.generate(24, (i) => i + 1)
+                            .map((n) => DropdownMenuItem(
+                                value: n, child: Text(n.toString())))
+                            .toList(),
+                        onChanged: (val) =>
+                            setStateSB(() => frequencyAmount = val),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    Expanded(
+                      flex: 3,
+                      child: DropdownButtonFormField<String>(
+                        value: frequencyUnit,
+                        decoration: const InputDecoration(labelText: "Unit"),
+                        items: ["minutes", "hours", "days", "weeks"]
+                            .map((u) => DropdownMenuItem(
+                                value: u, child: Text(u)))
+                            .toList(),
+                        onChanged: (val) =>
+                            setStateSB(() => frequencyUnit = val),
+                      ),
+                    ),
+                  ],
                 ),
+
+                const SizedBox(height: 15),
+
+                // Quantity
                 TextField(
                   controller: quantityController,
                   decoration: const InputDecoration(labelText: "Total Quantity"),
@@ -78,33 +161,48 @@ class _MedicationPageState extends State<ViewMedicationPage> {
               ],
             ),
           ),
+
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel", style: TextStyle(color: Colors.red)),
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel", style: TextStyle(color: Colors.red))
             ),
+
             ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               onPressed: () {
+                if (dosageNumber == null ||
+                    dosageUnitController.text.trim().isEmpty ||
+                    frequencyAmount == null ||
+                    frequencyUnit == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Please fill all fields")),
+                  );
+                  return;
+                }
+
                 setState(() {
                   medications[index] = {
                     'name': nameController.text,
-                    'dosage': dosageController.text,
-                    'frequency': frequencyController.text,
                     'quantity': quantityController.text,
+                    'dosage':
+                        "${dosageNumber!} ${dosageUnitController.text.trim()}",
+                    'frequency':
+                        "every ${frequencyAmount!} ${frequencyUnit!}",
                   };
                 });
 
                 _saveMedications();
                 Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               child: const Text("Save"),
             ),
           ],
         );
-      },
-    );
-  }
+      });
+    },
+  );
+}
 
   void _deleteMedication(int index) async {
     setState(() {
