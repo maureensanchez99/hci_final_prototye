@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     
     <application
-        android:label="hci_final_prototye"
+        android:label="MediMate"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
